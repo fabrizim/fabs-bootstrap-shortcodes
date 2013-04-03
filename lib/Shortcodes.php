@@ -26,6 +26,46 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     parent::__construct();
   }
   
+  /**
+   * We need to process content prior to the autop filter, but
+   * without moving the default order of autop (otherwise it will
+   * break shortcodes for other plugins, like Gravity Forms.)
+   *
+   * http://wpforce.com/prevent-wpautop-filter-shortcode/
+   *
+   * @wp.filter       the_content
+   * @wp.priority     7
+   */
+  public function process_content_before_autop( $content )
+  {
+    global $shortcode_tags;
+    $orig_shortcode_tags = $shortcode_tags;
+    $shortcode_tags = array();
+    
+    $this_shortcodes = array();
+    
+    // lets add all of our own shortcode tags
+    $reflectionClass = new ReflectionClass( $this );
+    foreach( $reflectionClass->getMethods( ReflectionMethod::IS_PUBLIC ) as $method ){
+      $name = $method->getName();
+      if( ($shortcode = $this->snap->method('wp.shortcode', false)) !== false ){
+        $this_shortcodes[] = $name;
+        $this->_wp_add('shortcode', $name);
+      }
+    }
+    
+    $content = do_shortcode( $content );
+    /*
+    foreach( $orig_shortcode_tags as $key => $fn){
+      if( in_array($key, $this_shortcodes ) ) unset( $orig_shortcode_tags[$key] );
+    }
+    */
+    $shortcode_tags = $orig_shortcode_tags;
+    
+    return $content;
+    
+  }
+  
   protected function _wp_register_methods()
   {
     $reflectionClass = new ReflectionClass( $this );
@@ -174,7 +214,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       foreach( $row['_items'] as $col ) echo $col['_content'];
     ?></<?= $tag ?>>
     <?
-    return ob_get_clean();
+    return trim( ob_get_clean() );
   }
   
   /**
@@ -207,9 +247,9 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     
     ob_start();
     ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs) ?>><?= do_shortcode( $content ) ?></<?= $tag ?>>
+    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs) ?>><?= do_shortcode( trim($content) ) ?></<?= $tag ?>>
     <?
-    $col['_content'] = ob_get_clean();
+    $col['_content'] = trim( ob_get_clean() );
     $row['_items'][] = $col;
   }
   
@@ -512,13 +552,39 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
         <?= do_shortcode( trim( $content ) ) ?>
       </div>
       
-      <? if( @$footer !== 'false' || @$footer !== false ){ ?>
+      <? if( @$footer !== 'false' && @$footer !== false ){ ?>
       <div class="modal-footer">
         <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
       </div>
       <? } ?>
       
     </div>
+    <?
+    return ob_get_clean();
+  }
+  
+  /**
+   * @wp.shortcode
+   */
+  public function icon($attrs, $content='')
+  {
+    
+    $attrs = (array) $attrs;
+    extract( $attrs );
+    
+    $classes = array();
+    if( @$icon ) $classes[] = "icon-$icon";
+    if( @$class ) $classes = array_merge( $classes, explode( ' ', $class ) );
+    
+    $tag_attrs = array(
+      'class'   => implode(' ', $classes)
+    );
+    
+    foreach(array('class','icon') as $k ) unset( $attrs[$k] );
+    $tag_attrs = array_merge( $attrs, $tag_attrs );
+    ob_start();
+    ?>
+    <i <?= $this->to_attrs( $tag_attrs ) ?>></i>
     <?
     return ob_get_clean();
   }

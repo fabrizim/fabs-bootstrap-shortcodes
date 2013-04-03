@@ -44,10 +44,4 @@ function fabs_twitter_bootstrap_shortcodes()
   require_once(dirname(__FILE__).'/lib/Shortcodes.php');
   Snap::inst('Fabs_Bootstrap_Shortcodes');
   
-  /********************************************************
-  * We need this to avoid a bunch of extra paragraphs where
-  * content has unavoidable line breaks
-  *********************************************************/
-  remove_filter( 'the_content', 'wpautop' );
-  add_filter( 'the_content', 'wpautop' , 12);
 }

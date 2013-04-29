@@ -19,6 +19,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
   
   protected $nav_stack = array();
   protected $row_stack = array();
+  protected $title_stack = array();
   protected $id = 0;
   
   public function __construct()
@@ -93,6 +94,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     $attrs = array();
     
     foreach( $ar as $key => $val ){
+      if( !$key ) continue;
       if( strpos($key, 'data_') === 0 ){
         $key = 'data-'.substr($key, 5);
       }
@@ -366,6 +368,13 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     <div <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode( trim( $content ) ) ?></div>
     <?
     $item['_content'] = ob_get_clean();
+    
+    $count = count( $this->title_stack );
+    do_shortcode( trim( $content ) );
+    if( count($this->title_stack) > $count ){
+      $item['title'] = array_pop($this->title_stack);
+    }
+    
     $nav['_items'][] = $item;
   }
   
@@ -508,9 +517,16 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     foreach(array('class','title') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
+    $count = count( $this->title_stack );
+    do_shortcode( trim( $content ) );
+    if( count($this->title_stack) > $count ){
+      $title = array_pop($this->title_stack);
+    }
+    
+    
     $this->accordion[] = array(
       'title'   => @$title ? $title : 'Accordion Title '.(count($this->accordion)+1)
-    , 'content' => do_shortcode( trim( $content ) )
+    , 'content' => $content
     , 'attrs'   => $tag_attrs
     );
   }
@@ -589,4 +605,14 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     return ob_get_clean();
   }
   
+  /**
+   * This is a multi-purpose shortcode to use in place of an attribute
+   * for nav and accordion components
+   * 
+   * @wp.shortcode
+   */
+  public function title($attrs = array(), $content = '')
+  {
+    $this->title_stack[] = $content;
+  }
 }

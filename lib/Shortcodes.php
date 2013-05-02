@@ -56,14 +56,9 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     }
     
     $content = do_shortcode( $content );
-    /*
-    foreach( $orig_shortcode_tags as $key => $fn){
-      if( in_array($key, $this_shortcodes ) ) unset( $orig_shortcode_tags[$key] );
-    }
-    */
     $shortcode_tags = $orig_shortcode_tags;
     
-    return $content;
+    return trim($content);
     
   }
   
@@ -244,7 +239,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       'class' => implode(' ', $classes)
     );
     
-    foreach(array('class','tag') as $k ) unset( $attrs[$k] );
+    foreach(array('class','tag','span') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
     ob_start();
@@ -297,38 +292,37 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     
     ob_start();
     ?>
-    <ul class="<?= implode(' ',$nav_classes) ?>">
-      <? foreach( $cur['_items'] as $i => $item ){
+    <ul class="<?= implode(' ',$nav_classes) ?>"><?
+      foreach( $cur['_items'] as $i => $item ){
         $item_attrs = array(
           'href'  => '#'.$item['id']
         );
         $item_attrs['data-toggle'] = 'tab';
-        ?>
-      <li class="<?= $i===0 ? 'active' : '' ?>">
-        <a <?= $this->to_attrs( $item_attrs ) ?>><?=
+      ?><li class="<?= $i===0 ? 'active' : '' ?>"><?
+      ?><a <?= $this->to_attrs( $item_attrs ) ?>><?=
           @$item['title'] ? $item['title'] : ('Item '.($i+1))
-        ?></a>
-      </li>
-      <? } ?>
+        ?></a><?
+      ?></li><?
+      } ?>
     </ul>
     <?
-    $nav = ob_get_clean();
+    $nav = trim( ob_get_clean() );
     
     ob_start();
     ?>
-    <div <?= $this->to_attrs( $tag_attrs ) ?>>
-      <? if( @$tabs != 'below' ){ ?>
-      <?= $nav ?>
-      <? } ?>
-      <div class="tab-content"><?
+    <div <?= $this->to_attrs( $tag_attrs ) ?>><?
+      if( @$tabs != 'below' ){ 
+      ?><?= $nav ?><?
+      } 
+      ?><div class="tab-content"><?
         foreach( $cur['_items'] as $item )  echo $item['_content'];
-      ?></div>
-      <? if( @$tabs == 'below' ){ ?>
-      <?= $nav ?>
-      <? } ?>
-    </div>
+      ?></div><?
+      if( @$tabs == 'below' ){
+      ?><?= $nav ?><?
+      } 
+    ?></div>
     <?
-    return ob_get_clean();
+    return trim( ob_get_clean() );
     
   }
   
@@ -367,10 +361,9 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     ?>
     <div <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode( trim( $content ) ) ?></div>
     <?
-    $item['_content'] = ob_get_clean();
+    $item['_content'] = trim( ob_get_clean() );
     
     $count = count( $this->title_stack );
-    do_shortcode( trim( $content ) );
     if( count($this->title_stack) > $count ){
       $item['title'] = array_pop($this->title_stack);
     }
@@ -404,7 +397,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       <?= do_shortcode( trim( $content ) ) ?>
     </div>
     <?
-    return ob_get_clean();
+    return trim(ob_get_clean());
   }
   
   /**
@@ -556,27 +549,25 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     ob_start();
     ?>
-    <div <?= $this->to_attrs( $tag_attrs ) ?>>
-      <? if( @$title ){ ?>
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3><?= $title ?></h3>
-      </div>
-      <? } ?>
+    <div <?= $this->to_attrs( $tag_attrs ) ?>><?
+      if( @$title ){
+      ?><div class="modal-header"><?
+        ?><button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><?
+        ?><h3><?= $title ?></h3><?
+      ?></div><?
+      }
+      ?><div class="modal-body"><?
+        echo do_shortcode( trim( $content ) );
+      ?></div><?
       
-      <div class="modal-body">
-        <?= do_shortcode( trim( $content ) ) ?>
-      </div>
-      
-      <? if( @$footer !== 'false' && @$footer !== false ){ ?>
-      <div class="modal-footer">
-        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-      </div>
-      <? } ?>
-      
-    </div>
+      if( @$footer !== 'false' && @$footer !== false ){
+        ?><div class="modal-footer"><?
+          ?><button class="btn" data-dismiss="modal" aria-hidden="true">Close</button><?
+        ?></div><?
+      }
+    ?></div>
     <?
-    return ob_get_clean();
+    return trim( ob_get_clean() );
   }
   
   /**

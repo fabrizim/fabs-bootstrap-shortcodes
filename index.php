@@ -16,11 +16,11 @@
 Plugin Name: Twitter Bootstrap Shortcodes
 Description: Shortcodes Library for Twitter Bootstrap.
 Author: Mark Fabrizio
-Version: 1.0.0
+Version: 1.0.1
 Author URI: http://www.owlwatch.com
 */
 
-add_action('plugins_loaded', 'fabs_twitter_bootstrap_shortcodes');
+add_action('init', 'fabs_twitter_bootstrap_shortcodes');
 function fabs_twitter_bootstrap_shortcodes()
 {
   /********************************************************
@@ -32,15 +32,15 @@ function fabs_twitter_bootstrap_shortcodes()
     {
       ?>
       <div class="error">
-        Twitter Bootstrap Shortcodes requires the
+        <p>Twitter Bootstrap Shortcodes requires the
         <a href="https://github.com/fabrizim/Snap">Snap plugin</a>.
+        </p>
       </div>
       <?
     }
     return;
   }
   
-  // Snap_Loader::register('Fabs_Bootstrap', dirname(__FILE__).'/lib');
   require_once(dirname(__FILE__).'/lib/Shortcodes.php');
   Snap::inst('Fabs_Bootstrap_Shortcodes');
   

@@ -1,4 +1,4 @@
-<?
+<?php
 class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
 {
   
@@ -21,6 +21,11 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
   protected $row_stack = array();
   protected $title_stack = array();
   protected $id = 0;
+  protected $in_shortcode = false;
+  
+  protected $index=0;
+  protected $replacements = array();
+  protected $replacement_shortcode = 'twitter_bootstrap_replacement_';
   
   public function __construct()
   {
@@ -34,7 +39,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
    *
    * http://wpforce.com/prevent-wpautop-filter-shortcode/
    *
-   * @wp.filter       the_content
+   * @wp.filter       ["acf_the_content","the_content"]
    * @wp.priority     7
    */
   public function process_content_before_autop( $content )
@@ -51,15 +56,27 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       $name = $method->getName();
       if( ($shortcode = $this->snap->method('wp.shortcode', false)) !== false ){
         $this_shortcodes[] = $name;
-        $this->_wp_add('shortcode', $name);
+        //$this->_wp_add('shortcode', $name);
+        add_shortcode( $name, array( &$this, 'shortcode') );
       }
     }
     
     $content = do_shortcode( $content );
     $shortcode_tags = $orig_shortcode_tags;
+    foreach( $this->replacements as $tag => $c ){
+      add_shortcode($tag, array(&$this, 'do_replacement'));
+    }
     
     return trim($content);
     
+  }
+  
+  public function shortcode( $atts, $content='', $tag='')
+  {
+    $fn = preg_replace('/\d+$/', '', $tag);
+    ob_start();
+    $this->$fn( $atts, $content, $tag );
+    return $this->_shortcode( trim( ob_get_clean() ) );
   }
   
   protected function _wp_register_methods()
@@ -76,6 +93,20 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     }
     
     return parent::_wp_register_methods();
+  }
+  
+  protected function _shortcode($content)
+  {
+    $tag = $this->replacement_shortcode.(++$this->index);
+    $this->replacements[$tag] = $content;
+    return "[$tag]";
+  }
+  
+  public function do_replacement($atts=array(), $content='', $tag)
+  {
+    $ret = $this->replacements[$tag];
+    unset( $this->replacements[$tag] );
+    return do_shortcode( $ret );
   }
   
   /**
@@ -130,7 +161,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
         margin: 2px;
       }
     </style>
-    <?
+    <?php
   }
   
   
@@ -144,6 +175,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     
     // defaults
     $tag = 'a';
+    $type = 'primary';
     if( !@$text ) $text = 'Button';
     
     extract( $attrs );
@@ -165,9 +197,11 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     foreach(array('a','text','class','type','size') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
-    ob_start();
-    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>><?
-    return ob_get_clean();
+    
+    ?>
+    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode($text) ?></<?= $tag ?>>
+    <?php
+    
   }
   
   /**
@@ -183,8 +217,8 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     $tag = 'div';
     extract( $attrs );
     
-    add_shortcode('row'.count($this->row_stack), array(&$this,'row'));
-    add_shortcode('col'.count($this->row_stack), array(&$this,'col'));
+    add_shortcode('row'.count($this->row_stack), array(&$this,'shortcode'));
+    add_shortcode('col'.count($this->row_stack), array(&$this,'shortcode'));
     
     $content = do_shortcode( trim($content) );
     
@@ -205,13 +239,13 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     foreach(array('class','fixed','tag') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
-    ob_start();
+    
     ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?
-      foreach( $row['_items'] as $col ) echo $col['_content'];
-    ?></<?= $tag ?>>
-    <?
-    return trim( ob_get_clean() );
+    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>>
+    <?php foreach( $row['_items'] as $col ) echo $col['_content']; ?>
+    </<?= $tag ?>>
+    <?php
+    
   }
   
   /**
@@ -245,7 +279,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     ob_start();
     ?>
     <<?= $tag ?> <?= $this->to_attrs( $tag_attrs) ?>><?= do_shortcode( trim($content) ) ?></<?= $tag ?>>
-    <?
+    <?php
     $col['_content'] = trim( ob_get_clean() );
     $row['_items'][] = $col;
   }
@@ -253,7 +287,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
   /**
    * @wp.shortcode
    */
-  public function nav($attrs, $content='')
+  public function nav($attrs, $content='', $tag)
   {
     
     $attrs = (array) $attrs;
@@ -263,10 +297,10 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     // this needs text
     extract( $attrs );
     
-    add_shortcode('nav'.count($this->nav_stack), array(&$this,'nav'));
-    add_shortcode('item'.count($this->nav_stack), array(&$this,'item'));
+    add_shortcode('nav'.count($this->nav_stack), array(&$this,'shortcode'));
+    add_shortcode('item'.count($this->nav_stack), array(&$this,'shortcode'));
     
-    $content = do_shortcode( trim($content) );
+    do_shortcode( trim($content) );
     
     remove_shortcode('nav'.count($this->nav_stack));
     remove_shortcode('item'.count($this->nav_stack));
@@ -292,44 +326,49 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     
     ob_start();
     ?>
-    <ul class="<?= implode(' ',$nav_classes) ?>"><?
+    <ul class="<?= implode(' ',$nav_classes) ?>">
+      <?php
       foreach( $cur['_items'] as $i => $item ){
         $item_attrs = array(
           'href'  => '#'.$item['id']
         );
         $item_attrs['data-toggle'] = 'tab';
-      ?><li class="<?= $i===0 ? 'active' : '' ?>"><?
-      ?><a <?= $this->to_attrs( $item_attrs ) ?>><?=
-          @$item['title'] ? $item['title'] : ('Item '.($i+1))
-        ?></a><?
-      ?></li><?
-      } ?>
+        ?>
+      <li class="<?= $i===0 ? 'active' : '' ?>">
+        <a <?= $this->to_attrs( $item_attrs ) ?>><?= @$item['title'] ? $item['title'] : ('Item '.($i+1)) ?></a>
+      </li>
+        <?php
+      }
+      ?>
     </ul>
-    <?
+    <?php
     $nav = trim( ob_get_clean() );
-    
-    ob_start();
     ?>
-    <div <?= $this->to_attrs( $tag_attrs ) ?>><?
+    <div <?= $this->to_attrs( $tag_attrs ) ?>>
+      <?php
       if( @$tabs != 'below' ){ 
-      ?><?= $nav ?><?
+        echo $nav;
       } 
-      ?><div class="tab-content"><?
+      ?>
+      <div class="tab-content">
+      <?php
         foreach( $cur['_items'] as $item )  echo $item['_content'];
-      ?></div><?
+      ?>
+      </div>
+      <?php
       if( @$tabs == 'below' ){
-      ?><?= $nav ?><?
+        echo $nav;
       } 
-    ?></div>
-    <?
-    return trim( ob_get_clean() );
+    ?>
+    </div>
+    <?php
     
   }
   
   /**
    * @wp.shortcode
    */
-  public function item($attrs, $content='')
+  public function item($attrs, $content='', $tag='')
   {
     
     $attrs = (array) $attrs;
@@ -359,8 +398,9 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     
     ob_start();
     ?>
-    <div <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode( trim( $content ) ) ?></div>
-    <?
+    <div <?= $this->to_attrs( $tag_attrs ) ?>><?= wpautop( do_shortcode( trim( $content ) ) ) ?></div>
+    <?php
+    
     $item['_content'] = trim( ob_get_clean() );
     
     $count = count( $this->title_stack );
@@ -390,14 +430,14 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       'class' => implode(' ', $classes)
     );
     foreach(array('class','type','block') as $k) unset( $attrs[$k] );
-    ob_start();
+    
     ?>
     <div <?= $this->to_attrs( $tag_attrs ) ?>>
-      <? if( @$close ){ ?><button type="button" class="close" data-dismiss="alert">&times;</button><? } ?>
+      <?php if( @$close ){ ?><button type="button" class="close" data-dismiss="alert">&times;</button><?php } ?>
       <?= do_shortcode( trim( $content ) ) ?>
     </div>
-    <?
-    return trim(ob_get_clean());
+    <?php
+    
   }
   
   /**
@@ -417,9 +457,12 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       'class' => implode(' ', $classes)
     );
     foreach(array('class','type') as $k) unset( $attrs[$k] );
-    ob_start();
-    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode( trim( $text ) ) ?></<?= $tag ?>><?
-    return ob_get_clean();
+    ?>
+    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>>
+      <?= do_shortcode( trim( $text ) ) ?>
+    </<?= $tag ?>>
+    <?php
+    
   }
   
   /**
@@ -439,9 +482,8 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       'class' => implode(' ', $classes)
     );
     foreach(array('class','type') as $k) unset( $attrs[$k] );
-    ob_start();
-    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode( trim( $text ) ) ?></<?= $tag ?>><?
-    return ob_get_clean();
+    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode( trim( $text ) ) ?></<?= $tag ?>><?php
+    
   }
   
   /**
@@ -471,21 +513,26 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     $this->accordion = array();
     $content = do_shortcode( trim($content) );
     
-    ob_start();
-    ?><div <?= $this->to_attrs( $tag_attrs ) ?>>
-      <? foreach( $this->accordion as $i => $panel ){ ?>
-        <div class="accordion-group"><?
-        ?><div class="accordion-heading"><?
-          ?><a class="accordion-toggle" data-toggle="collapse" data-parent="#<?= $id ?>" href="#<?= $panel['attrs']['id'] ?>"><?= $panel['title'] ?></a><?
-        ?></div><?
-        ?><div id="<?= $panel['attrs']['id'] ?>" class="accordion-body collapse <?= !$i && @$open ? 'in' : 'out' ?>"><?
-          ?><div class="accordion-inner"><?= $panel['content'] ?></div><?
-        ?></div><?
-      ?></div><?
-      } 
-    ?></div>
-    <?
-    return ob_get_clean();
+    ?>
+    <div <?= $this->to_attrs( $tag_attrs ) ?>>
+    <?php
+    foreach( $this->accordion as $i => $panel ){
+      ?>
+      <div class="accordion-group<?= $panel['open'] ? ' open':'' ?>">
+        <div class="accordion-heading">
+          <a class="accordion-toggle" data-toggle="collapse" data-parent="#<?= $id ?>" href="#<?= $panel['attrs']['id'] ?>">
+            <?= $panel['title'] ?>
+          </a>
+        </div>
+        <div id="<?= $panel['attrs']['id'] ?>" class="accordion-body collapse <?= $panel['open'] ? 'in' : 'out' ?>">
+          <div class="accordion-inner"><?= $panel['content'] ?></div>
+        </div>
+      </div>
+      <?php
+    } 
+    ?>
+    </div>
+    <?php
     
   }
   
@@ -507,11 +554,11 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       'class'   => implode(' ', $classes)
     );
     
-    foreach(array('class','title') as $k ) unset( $attrs[$k] );
+    foreach(array('class','title','open') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
     $count = count( $this->title_stack );
-    do_shortcode( trim( $content ) );
+    $content = wpautop( do_shortcode( trim( $content ) ) );
     if( count($this->title_stack) > $count ){
       $title = array_pop($this->title_stack);
     }
@@ -521,6 +568,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       'title'   => @$title ? $title : 'Accordion Title '.(count($this->accordion)+1)
     , 'content' => $content
     , 'attrs'   => $tag_attrs
+    , 'open'    => @$open
     );
   }
   
@@ -547,33 +595,42 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     
     foreach(array('class','title') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
-    ob_start();
+    
     ?>
-    <div <?= $this->to_attrs( $tag_attrs ) ?>><?
+    <div <?= $this->to_attrs( $tag_attrs ) ?>>
+    <?php
       if( @$title ){
-      ?><div class="modal-header"><?
-        ?><button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><?
-        ?><h3><?= $title ?></h3><?
-      ?></div><?
+        ?>
+      <div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3><?= $title ?></h3>
+      </div>
+        <?php
       }
-      ?><div class="modal-body"><?
-        echo do_shortcode( trim( $content ) );
-      ?></div><?
+      ?>
+      <div class="modal-body">
+      <?php
+        echo wpautop( do_shortcode( trim( $content ) ) );
+      ?>
+      </div>
+      <?php
       
       if( @$footer !== 'false' && @$footer !== false ){
-        ?><div class="modal-footer"><?
-          ?><button class="btn" data-dismiss="modal" aria-hidden="true">Close</button><?
-        ?></div><?
+        ?>
+      <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+      </div>
+        <?php
       }
-    ?></div>
-    <?
-    return trim( ob_get_clean() );
+    ?>
+    </div>
+    <?php
+    
   }
   
   /**
    * @wp.shortcode
    */
-  public function icon($attrs, $content='')
+  public function icon($attrs, $content='', $tag)
   {
     
     $attrs = (array) $attrs;
@@ -589,11 +646,170 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     
     foreach(array('class','icon') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
-    ob_start();
     ?>
     <i <?= $this->to_attrs( $tag_attrs ) ?>></i>
-    <?
-    return ob_get_clean();
+    <?php
+    
+  }
+  
+  /**
+   * @wp.shortcode
+   */
+  public function tooltip($attrs, $content='')
+  {
+    
+    $attrs = (array) $attrs;
+    extract( $attrs );
+    
+    if( !(@$text || @$icon) ) return;
+    
+    $this->register_tooltip_script();
+    
+    $classes = array('display-tooltip');
+    if( @$class ) $classes = array_merge( $classes, explode( ' ', $class ) );
+    if( @$icon ) {
+      $tag = 'i';
+      $classes = array_merge( $classes, array('icon', 'icon-'.$icon) );
+      $text = '';
+    }
+    else {
+      $tag = 'span';
+    }
+    
+    $title =  do_shortcode( trim($content) );
+    
+    if( !@$placement ) $placement = 'top';
+    
+    $tag_attrs = array(
+      'data-has-tooltip'=> 'true',
+      'class'           => implode(' ', $classes),
+      'title'           => $title,
+      'data-placement'  => $placement
+    );
+    
+    foreach(array('class','icon','text') as $k ) unset( $attrs[$k] );
+    $tag_attrs = array_merge( $attrs, $tag_attrs );
+    ?>
+    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>>
+    <?php
+    
+  }
+  
+  /**
+   * @wp.shortcode
+   */
+  public function popover($attrs, $content='')
+  {
+    
+    $attrs = (array) $attrs;
+    extract( $attrs );
+    
+    if( !(@$text || @$icon) ) return;
+    
+    $this->register_popover_script();
+    
+    $classes = array('display-popover');
+    if( @$class ) $classes = array_merge( $classes, explode( ' ', $class ) );
+    if( @$icon ) {
+      $tag = 'i';
+      $classes = array_merge( $classes, array('icon', 'icon-'.$icon) );
+      $text = '';
+    }
+    else {
+      $tag = 'span';
+    }
+    
+    $content = do_shortcode( trim($content) );
+    if( !@$title ) $title = false;
+    
+    if( !@$placement ) $placement = 'top';
+    
+    $tag_attrs = array(
+      'data-has-popover'=> 'true',
+      'class'           => implode(' ', $classes),
+      'data-content'    => $content,
+      'data-placement'  => $placement,
+      'title'           => $title,
+      'data-html'       => 'true'
+    );
+    
+    foreach(array('class','icon','text') as $k ) unset( $attrs[$k] );
+    $tag_attrs = array_merge( $attrs, $tag_attrs );
+    ?>
+    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>>
+    <?php
+    
+  }
+  
+  protected function register_tooltip_script()
+  {
+    static $registered;
+    if( !isset($registered) ){
+      add_action('wp_footer', function(){
+        ?>
+        <script type="text/javascript">
+          jQuery('[data-has-tooltip]').tooltip();
+        </script>
+        <?php
+      });
+      $registered = true;
+    }
+  }
+  
+  protected function register_popover_script()
+  {
+    static $registered;
+    if( !isset($registered) ){
+      add_action('wp_footer', function(){
+        ?>
+        <script type="text/javascript">
+          jQuery('[data-has-popover]').popover({
+            trigger: 'manual'
+          }).on('click', function(){
+            
+            if ( jQuery(this).data('popover_displayed') ) return;
+            
+            var $this = jQuery(this);
+            
+            $this.data('popover_displayed', true);
+            $this.popover('show');
+            
+            // prevent same event from triggering close
+            setTimeout(function(){
+              jQuery(document).on('click', document_click);
+              jQuery(document).on('keyup', document_keyup);
+            }, 10);
+            
+            function document_click(e){
+              if ( jQuery(e.target).parents('.popover').length ) return;
+              hide();
+            }
+            
+            function document_keyup(e){
+              // listen for escape
+              if ( e.keyCode == 27 ) hide();
+            }
+            
+            function hide() {
+              $this.popover('hide');
+              $this.data('popover_displayed', false);
+              jQuery( document ).off('click', document_click);
+              jQuery( document ).off('keyup', document_keyup);
+            }
+            
+          });
+        </script>
+        <?php
+      });
+      $registered = true;
+    }
+  }
+  /**
+   * wp.shortcode
+   */
+  public function esc($attrs, $content='')
+  {
+    echo str_replace(array('[',']'), array('&#91;','&#93;'), $content);
   }
   
   /**

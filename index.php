@@ -16,7 +16,7 @@
 Plugin Name: Twitter Bootstrap Shortcodes
 Description: Shortcodes Library for Twitter Bootstrap.
 Author: Mark Fabrizio
-Version: 1.0.1
+Version: 1.2
 Author URI: http://www.owlwatch.com
 */
 

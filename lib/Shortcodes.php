@@ -22,6 +22,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
   protected $title_stack = array();
   protected $id = 0;
   protected $in_shortcode = false;
+  protected $bootstrap_version = 2;
   
   protected $index=0;
   protected $replacements = array();
@@ -30,6 +31,11 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
   public function __construct()
   {
     parent::__construct();
+  }
+  
+  public function set_bootstrap_version($version)
+  {
+    $this->bootstrap_version = $version;
   }
   
   /**
@@ -228,7 +234,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     $row = array_pop( $this->row_stack );
     
     $classes = array();
-    $classes[] = @$fixed ? 'row' : 'row-fluid';
+    $classes[] = $this->bootstrap_version == 3 || @$fixed ? 'row' : 'row-fluid';
     
     if( @$class ) $classes += explode( ' ', $class );
     
@@ -265,7 +271,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     $row =& $this->row_stack[count($this->row_stack)-1];
     $col = $attrs;
     
-    $classes = array("span{$span}");
+    $classes = array("span{$span}", "col-sm-{$span}");
     
     if( @$class ) $classes = array_merge( $classes, $explode(' ',$class));
     

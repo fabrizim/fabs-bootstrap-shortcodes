@@ -82,7 +82,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     $fn = preg_replace('/\d+$/', '', $tag);
     ob_start();
     $this->$fn( $atts, $content, $tag );
-    return $this->_shortcode( trim( ob_get_clean() ) );
+    return $this->_shortcode( wpautop( trim( ob_get_clean() ) ) );
   }
   
   protected function _wp_register_methods()
@@ -271,7 +271,23 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     $row =& $this->row_stack[count($this->row_stack)-1];
     $col = $attrs;
     
-    $classes = array("span{$span}", "col-sm-{$span}");
+    $classes = array();
+    
+    if( $this->bootstrap_version === 3 ){
+      if( @$span && !@$sm) $classes[] = "col-sm-{$span}";
+      if( @$offset && !@$sm_offset ) $classes[] = "col-sm-offset-{$offset}";
+      
+      foreach( array('xs','sm','md','lg') as $size ){
+        if( @$$size ) $classes[] = "col-{$size}-{$$size}";
+        // offset
+        $offset = "{$size}_offset";
+        if( @$$offset ) $classes[] = "col-{$size}-offset-{$$offset}";
+      }
+    }
+    else {
+      $classes[] = "span{$span}";
+    }
+    
     
     if( @$class ) $classes = array_merge( $classes, $explode(' ',$class));
     
@@ -505,13 +521,17 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     extract( $attrs );
     
     $classes = array();
+    $bs3 = $this->bootstrap_version === 3;
     
     if( @$class ) $classes = array_merge( $classes,  explode( ' ', $class ) );
+    
+    if( $bs3 ) $classes[] = 'panel-group';
     
     $tag_attrs = array(
       'class' => implode(' ', $classes)
     , 'id'    => $id
     );
+    
     
     foreach(array('class','id','open') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
@@ -519,25 +539,23 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     $this->accordion = array();
     $content = do_shortcode( trim($content) );
     
+    
+    
     ?>
-    <div <?= $this->to_attrs( $tag_attrs ) ?>>
+    <ul <?= $this->to_attrs( $tag_attrs ) ?>>
     <?php
     foreach( $this->accordion as $i => $panel ){
       ?>
-      <div class="accordion-group<?= $panel['open'] ? ' open':'' ?>">
-        <div class="accordion-heading">
-          <a class="accordion-toggle" data-toggle="collapse" data-parent="#<?= $id ?>" href="#<?= $panel['attrs']['id'] ?>">
-            <?= $panel['title'] ?>
-          </a>
+      <li class="<?= $bs3?'panel panel-default':'accordion-group' ?><?= $panel['open'] ? ' open':'' ?>">
+        <div class="<?= $bs3?'panel':'accordion' ?>-heading"><h4 class="<?= $bs3?'panel-title':'accordion-title'?>"><a class="accordion-toggle" data-toggle="collapse" data-parent="#<?= $id ?>" href="#<?= $panel['attrs']['id'] ?>"><?= $panel['title'] ?></a></h4></div>
+        <div id="<?= $panel['attrs']['id'] ?>" class="<?=$bs3?'panel-collapse':'accordion-body'?> collapse <?= $panel['open'] ? 'in' : 'out' ?>">
+          <div class="<?=$bs3?'panel-body':'accordion-inner'?>"><?= $panel['content'] ?></div>
         </div>
-        <div id="<?= $panel['attrs']['id'] ?>" class="accordion-body collapse <?= $panel['open'] ? 'in' : 'out' ?>">
-          <div class="accordion-inner"><?= $panel['content'] ?></div>
-        </div>
-      </div>
+      </li>
       <?php
     } 
     ?>
-    </div>
+    </ul>
     <?php
     
   }
@@ -564,7 +582,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
     $count = count( $this->title_stack );
-    $content = wpautop( do_shortcode( trim( $content ) ) );
+    $content = do_shortcode( wpautop( trim( $content ) ) );
     if( count($this->title_stack) > $count ){
       $title = array_pop($this->title_stack);
     }
@@ -652,9 +670,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     
     foreach(array('class','icon') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
-    ?>
-    <i <?= $this->to_attrs( $tag_attrs ) ?>></i>
-    <?php
+    ?><i <?= $this->to_attrs( $tag_attrs ) ?>></i><?php
     
   }
   
@@ -826,6 +842,6 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
    */
   public function title($attrs = array(), $content = '')
   {
-    $this->title_stack[] = $content;
+    $this->title_stack[] = do_shortcode($content);
   }
 }

@@ -85,20 +85,10 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     return $this->_shortcode( trim( ob_get_clean() ) );
   }
   
-  protected function _wp_register_methods()
+  protected function _wp_add($type, $name)
   {
-    $reflectionClass = new ReflectionClass( $this );
-    foreach( $reflectionClass->getMethods( ReflectionMethod::IS_PUBLIC ) as $method ){
-      $name = $method->getName();
-      // check to see if its a shortcode
-      if( ($shortcode = $this->snap->method('wp.shortcode', false)) !== false ){
-        // if we have a prefix for the shortcode, lets add it here
-        
-        //$this->snap->registry()->set("method.$name.wp.shortcode", "{$prefix}_{$name}");
-      }
-    }
-    
-    return parent::_wp_register_methods();
+    if( $type != 'shortcode' )
+      parent::_wp_add($type, $name);
   }
   
   protected function _shortcode($content)
@@ -247,9 +237,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     
     
     ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>>
-    <?php foreach( $row['_items'] as $col ) echo $col['_content']; ?>
-    </<?= $tag ?>>
+    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?php foreach( $row['_items'] as $col ) echo $col['_content']; ?></<?= $tag ?>>
     <?php
     
   }

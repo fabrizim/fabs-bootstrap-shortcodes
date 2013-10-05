@@ -1,5 +1,5 @@
 <?php
-class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
+class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
 {
   
   protected $buttons = array(
@@ -24,106 +24,9 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
   protected $in_shortcode = false;
   protected $bootstrap_version = 2;
   
-  protected $index=0;
-  protected $replacements = array();
-  protected $replacement_shortcode = 'twitter_bootstrap_replacement_';
-  
-  public function __construct()
-  {
-    parent::__construct();
-  }
-  
-  public function set_bootstrap_version($version)
+  public function set_bootstrap_version( $version )
   {
     $this->bootstrap_version = $version;
-  }
-  
-  /**
-   * We need to process content prior to the autop filter, but
-   * without moving the default order of autop (otherwise it will
-   * break shortcodes for other plugins, like Gravity Forms.)
-   *
-   * http://wpforce.com/prevent-wpautop-filter-shortcode/
-   *
-   * @wp.filter       ["acf_the_content","the_content"]
-   * @wp.priority     7
-   */
-  public function process_content_before_autop( $content )
-  {
-    global $shortcode_tags;
-    $orig_shortcode_tags = $shortcode_tags;
-    $shortcode_tags = array();
-    
-    $this_shortcodes = array();
-    
-    // lets add all of our own shortcode tags
-    $reflectionClass = new ReflectionClass( $this );
-    foreach( $reflectionClass->getMethods( ReflectionMethod::IS_PUBLIC ) as $method ){
-      $name = $method->getName();
-      if( ($shortcode = $this->snap->method('wp.shortcode', false)) !== false ){
-        $this_shortcodes[] = $name;
-        //$this->_wp_add('shortcode', $name);
-        add_shortcode( $name, array( &$this, 'shortcode') );
-      }
-    }
-    
-    $content = do_shortcode( $content );
-    $shortcode_tags = $orig_shortcode_tags;
-    foreach( $this->replacements as $tag => $c ){
-      add_shortcode($tag, array(&$this, 'do_replacement'));
-    }
-    
-    return trim($content);
-    
-  }
-  
-  public function shortcode( $atts, $content='', $tag='')
-  {
-    $fn = preg_replace('/\d+$/', '', $tag);
-    ob_start();
-    $this->$fn( $atts, $content, $tag );
-    return $this->_shortcode( wpautop( trim( ob_get_clean() ) ) );
-  }
-  
-  protected function _wp_add($type, $name)
-  {
-    if( $type != 'shortcode' )
-      parent::_wp_add($type, $name);
-  }
-  
-  protected function _shortcode($content)
-  {
-    $tag = $this->replacement_shortcode.(++$this->index);
-    $this->replacements[$tag] = $content;
-    return "[$tag]";
-  }
-  
-  public function do_replacement($atts=array(), $content='', $tag)
-  {
-    $ret = $this->replacements[$tag];
-    unset( $this->replacements[$tag] );
-    return do_shortcode( $ret );
-  }
-  
-  /**
-   * Return a string of html attributes from an associative array
-   *
-   * @param array Associative array of attributes
-   * @return string HTML attribute string
-   */
-  protected function to_attrs( $ar )
-  {
-    $attrs = array();
-    
-    foreach( $ar as $key => $val ){
-      if( !$key ) continue;
-      if( strpos($key, 'data_') === 0 ){
-        $key = 'data-'.substr($key, 5);
-      }
-      $val = esc_attr( $val );
-      $attrs[] = "$key=\"$val\"";
-    }
-    return implode(' ', $attrs);
   }
   
   /**
@@ -203,11 +106,11 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
   /**
    * @wp.shortcode
    */
-  public function row($attrs, $content='')
+  public function row($attrs=array(), $content='', $tag)
   {
     $attrs = (array) $attrs;
     
-    $this->row_stack[] = $attrs+array('_shortcode'=>'row', '_items' => array());
+    $this->row_stack[] = array_merge($attrs,array('_shortcode'=>'row', '_items' => array()));
     
     // this needs text
     $tag = 'div';
@@ -216,7 +119,9 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     add_shortcode('row'.count($this->row_stack), array(&$this,'shortcode'));
     add_shortcode('col'.count($this->row_stack), array(&$this,'shortcode'));
     
-    $content = do_shortcode( trim($content) );
+    $this->in_shortcode = $tag;
+    $content = do_shortcode( $content );
+    $this->in_shortcode = false;
     
     remove_shortcode('row'.count($this->row_stack));
     remove_shortcode('col'.count($this->row_stack));
@@ -247,6 +152,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
    */
   public function col($attrs, $content='')
   {
+    
     $attrs = (array) $attrs;
     
     // defaults
@@ -274,9 +180,10 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     }
     else {
       $classes[] = "span{$span}";
+      if( @$offset ){
+        $classes[] = "offset{$offset}";
+      }
     }
-    
-    
     if( @$class ) $classes = array_merge( $classes, $explode(' ',$class));
     
     $tag_attrs = array(
@@ -288,9 +195,11 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     
     ob_start();
     ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs) ?>><?= do_shortcode( trim($content) ) ?></<?= $tag ?>>
+    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs) ?>>
+    <?= do_shortcode( $content ) ?>
+    </<?= $tag ?>>
     <?php
-    $col['_content'] = trim( ob_get_clean() );
+    $col['_content'] = ob_get_clean();
     $row['_items'][] = $col;
   }
   
@@ -310,7 +219,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     add_shortcode('nav'.count($this->nav_stack), array(&$this,'shortcode'));
     add_shortcode('item'.count($this->nav_stack), array(&$this,'shortcode'));
     
-    do_shortcode( trim($content) );
+    do_shortcode( $content );
     
     remove_shortcode('nav'.count($this->nav_stack));
     remove_shortcode('item'.count($this->nav_stack));
@@ -352,7 +261,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       ?>
     </ul>
     <?php
-    $nav = trim( ob_get_clean() );
+    $nav = ob_get_clean();
     ?>
     <div <?= $this->to_attrs( $tag_attrs ) ?>>
       <?php
@@ -408,10 +317,10 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     
     ob_start();
     ?>
-    <div <?= $this->to_attrs( $tag_attrs ) ?>><?= wpautop( do_shortcode( trim( $content ) ) ) ?></div>
+    <div <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode( $content ) ?></div>
     <?php
     
-    $item['_content'] = trim( ob_get_clean() );
+    $item['_content'] = ob_get_clean();
     
     $count = count( $this->title_stack );
     if( count($this->title_stack) > $count ){
@@ -444,7 +353,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     ?>
     <div <?= $this->to_attrs( $tag_attrs ) ?>>
       <?php if( @$close ){ ?><button type="button" class="close" data-dismiss="alert">&times;</button><?php } ?>
-      <?= do_shortcode( trim( $content ) ) ?>
+      <?= do_shortcode( $content ) ?>
     </div>
     <?php
     
@@ -469,7 +378,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     foreach(array('class','type') as $k) unset( $attrs[$k] );
     ?>
     <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>>
-      <?= do_shortcode( trim( $text ) ) ?>
+      <?= do_shortcode( $text ) ?>
     </<?= $tag ?>>
     <?php
     
@@ -492,7 +401,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       'class' => implode(' ', $classes)
     );
     foreach(array('class','type') as $k) unset( $attrs[$k] );
-    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode( trim( $text ) ) ?></<?= $tag ?>><?php
+    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode( $text ) ?></<?= $tag ?>><?php
     
   }
   
@@ -525,7 +434,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
     $this->accordion = array();
-    $content = do_shortcode( trim($content) );
+    $content = do_shortcode( $content );
     
     
     
@@ -570,7 +479,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
     $count = count( $this->title_stack );
-    $content = do_shortcode( wpautop( trim( $content ) ) );
+    $content = do_shortcode( $content );
     if( count($this->title_stack) > $count ){
       $title = array_pop($this->title_stack);
     }
@@ -621,7 +530,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       ?>
       <div class="modal-body">
       <?php
-        echo wpautop( do_shortcode( trim( $content ) ) );
+        echo do_shortcode( $content );
       ?>
       </div>
       <?php
@@ -686,7 +595,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       $tag = 'span';
     }
     
-    $title =  do_shortcode( trim($content) );
+    $title =  do_shortcode( $content );
     
     if( !@$placement ) $placement = 'top';
     
@@ -729,7 +638,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Plugin
       $tag = 'span';
     }
     
-    $content = do_shortcode( trim($content) );
+    $content = do_shortcode( $content );
     if( !@$title ) $title = false;
     
     if( !@$placement ) $placement = 'top';

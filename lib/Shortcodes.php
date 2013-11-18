@@ -97,9 +97,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
     
-    ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode($text) ?></<?= $tag ?>>
-    <?php
+    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode($text) ?></<?= $tag ?>><?php
     
   }
   
@@ -608,9 +606,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     
     foreach(array('class','icon','text') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
-    ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>>
-    <?php
+    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>><?php
     
   }
   
@@ -654,9 +650,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     
     foreach(array('class','icon','text') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
-    ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>>
-    <?php
+    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>><?php
     
   }
   
@@ -724,7 +718,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     }
   }
   /**
-   * wp.shortcode
+   * @wp.shortcode
    */
   public function esc($attrs, $content='')
   {

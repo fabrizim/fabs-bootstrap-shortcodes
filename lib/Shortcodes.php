@@ -97,7 +97,9 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
     
-    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode($text) ?></<?= $tag ?>><?php
+    ?>
+    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode($text) ?></<?= $tag ?>>
+    <?php
     
   }
   
@@ -501,7 +503,8 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     if( !@$attrs['id'] ) $attrs['id'] = 'modal-'.(++$this->id);
     extract( $attrs );
     
-    $classes = array('modal', 'hide', 'fade');
+    $classes = array('modal', 'fade');
+    if( $this->bootstrap_version == 2 ) $classes[] = 'hide';
     
     if( @$class ) $classes = array_merge( $classes, explode( ' ', $class ) );
     
@@ -514,13 +517,19 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     
     foreach(array('class','title') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
-    
+    ob_start();
     ?>
     <div <?= $this->to_attrs( $tag_attrs ) ?>>
     <?php
+      if( $this->bootstrap_version === 3 ){
+        ?>
+        <div class="modal-dialog"><div class="modal-content">
+        <?php
+      }
       if( @$title ){
         ?>
-      <div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      <div class="modal-header">
+        <div><button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button></div>
         <h3><?= $title ?></h3>
       </div>
         <?php
@@ -540,10 +549,56 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
       </div>
         <?php
       }
+      if( $this->bootstrap_version === 3 ){
+        ?>
+        </div></div>
+        <?php
+      }
     ?>
     </div>
     <?php
+    if( !is_array(@$GLOBALS['_snap_modals']) ) $GLOBALS['_snap_modals'] = array();
+    $GLOBALS['_snap_modals'][] = ob_get_clean();
     
+  }
+  
+  /**
+   * @wp.action         wp_footer
+   */
+  public function output_modals()
+  {
+    if( is_array(@$GLOBALS['_snap_modals']) ) foreach( $GLOBALS['_snap_modals'] as $modal ) echo $modal;
+  }
+  
+  /**
+   * @wp.shortcode
+   */
+  public function modal_link($attrs=array(), $content='', $tag)
+  {
+    $attrs = (array) $attrs;
+    extract( $attrs );
+    $classes = array();
+    if( @$class ) $classes = array_merge( $classes, $explode(' ',$class));
+    if( !@$slug ){
+      $slug = @$page;
+    }
+    if( !$slug ) return;
+    $page = get_page_by_path( $slug );
+    $tag_attrs = array(
+      'class' => implode(' ', $classes)
+    , 'href'  => '#'.$page->post_name
+    , 'data-toggle' => 'modal'
+    );
+    foreach(array('class','slug','page') as $k) unset( $attrs[$k] );
+    $tag_attrs = array_merge( $attrs, $tag_attrs );
+    ?><a <?= $this->to_attrs( $tag_attrs ) ?>><?= $content ?></a><?php
+    global $post;
+    $post = $page;
+    setup_postdata( $post );
+    $attrs['id'] = $page->post_name;
+    if( !@$title ) $attrs['title'] = get_the_title();
+    $this->modal( $attrs, get_the_content() );
+    wp_reset_postdata();
   }
   
   /**
@@ -606,7 +661,9 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     
     foreach(array('class','icon','text') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
-    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>><?php
+    ?>
+    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>>
+    <?php
     
   }
   
@@ -650,7 +707,9 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     
     foreach(array('class','icon','text') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
-    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>><?php
+    ?>
+    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>>
+    <?php
     
   }
   
@@ -718,7 +777,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     }
   }
   /**
-   * @wp.shortcode
+   * wp.shortcode
    */
   public function esc($attrs, $content='')
   {

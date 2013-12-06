@@ -13,7 +13,7 @@
      \/__/       \/__/         \/__/
      
 
-Plugin Name: Twitter Bootstrap Shortcodes
+Plugin Name: Fabs Twitter Bootstrap Shortcodes
 Description: Shortcodes Library for Twitter Bootstrap.
 Author: Mark Fabrizio
 Version: 1.2

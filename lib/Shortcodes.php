@@ -129,7 +129,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     $classes = array();
     $classes[] = $this->bootstrap_version == 3 || @$fixed ? 'row' : 'row-fluid';
     
-    if( @$class ) $classes += explode( ' ', $class );
+    if( @$class ) $classes = array_merge( $classes, explode( ' ', $class ));
     
     $tag_attrs = array(
       'class' => implode(' ', $classes)
@@ -166,14 +166,29 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     $classes = array();
     
     if( $this->bootstrap_version === 3 ){
-      if( @$span && !@$sm) $classes[] = "col-sm-{$span}";
-      if( @$offset && !@$sm_offset ) $classes[] = "col-sm-offset-{$offset}";
+      if( @$attrs['span'] && !@$sm) $classes[] = "col-sm-{$span}";
+      if( @$attrs['offset'] && !@$sm_offset ) $classes[] = "col-sm-offset-{$offset}";
       
       foreach( array('xs','sm','md','lg') as $size ){
+        
         if( @$$size ) $classes[] = "col-{$size}-{$$size}";
+        unset( $attrs[$size] );
+        
         // offset
         $offset = "{$size}_offset";
         if( @$$offset ) $classes[] = "col-{$size}-offset-{$$offset}";
+        unset( $attrs[$offset] );
+        
+        // push
+        $push = "{$size}_push";
+        if( @$$push ) $classes[] = "col-{$size}-push-{$$push}";
+        unset( $attrs[$push] );
+        
+        // push
+        $pull = "{$size}_pull";
+        if( @$$pull ) $classes[] = "col-{$size}-pull-{$$pull}";
+        unset( $attrs[$pull] );
+        
       }
     }
     else {
@@ -182,13 +197,13 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
         $classes[] = "offset{$offset}";
       }
     }
-    if( @$class ) $classes = array_merge( $classes, $explode(' ',$class));
+    if( @$class ) $classes = array_merge( $classes, explode(' ',$class));
     
     $tag_attrs = array(
       'class' => implode(' ', $classes)
     );
     
-    foreach(array('class','tag','span') as $k ) unset( $attrs[$k] );
+    foreach(array('class','tag','span','xs','sm','md','lg') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
     ob_start();
@@ -336,7 +351,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     $attrs = (array) $attrs;
     extract( $attrs );
     $classes = array('alert');
-    if( @$class ) $classes = array_merge( $classes, $explode(' ',$class));
+    if( @$class ) $classes = array_merge( $classes, explode(' ',$class));
     if( @$type ){
       $classes[] = $classes[] = 'alert-'.$type;
     }
@@ -364,7 +379,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     $tag = 'span';
     extract( $attrs );
     $classes = array('label');
-    if( @$class ) $classes = array_merge( $classes, $explode(' ',$class));
+    if( @$class ) $classes = array_merge( $classes, explode(' ',$class));
     if( @$type ){
       $classes[] = $classes[] = 'label-'.$type;
     }
@@ -386,7 +401,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     $tag = 'span';
     extract( $attrs );
     $classes = array('badge');
-    if( @$class ) $classes = array_merge( $classes, $explode(' ',$class));
+    if( @$class ) $classes = array_merge( $classes, explode(' ',$class));
     if( @$type ){
       $classes[] = $classes[] = 'badge-'.$type;
     }
@@ -530,7 +545,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
       ?>
       <div class="modal-body">
       <?php
-        echo do_shortcode( $content );
+        echo apply_filters('the_content', $content );
       ?>
       </div>
       <?php
@@ -571,7 +586,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     $attrs = (array) $attrs;
     extract( $attrs );
     $classes = array();
-    if( @$class ) $classes = array_merge( $classes, $explode(' ',$class));
+    if( @$class ) $classes = array_merge( $classes, explode(' ',$class));
     if( !@$slug ){
       $slug = @$page;
     }

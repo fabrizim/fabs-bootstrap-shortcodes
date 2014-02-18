@@ -97,9 +97,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
     
-    ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode($text) ?></<?= $tag ?>>
-    <?php
+    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode($text) ?></<?= $tag ?>><?php
     
   }
   
@@ -350,12 +348,10 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     );
     foreach(array('class','type','block') as $k) unset( $attrs[$k] );
     
-    ?>
-    <div <?= $this->to_attrs( $tag_attrs ) ?>>
+    ?><div <?= $this->to_attrs( $tag_attrs ) ?>>
       <?php if( @$close ){ ?><button type="button" class="close" data-dismiss="alert">&times;</button><?php } ?>
       <?= do_shortcode( $content ) ?>
-    </div>
-    <?php
+    </div><?php
     
   }
   
@@ -376,10 +372,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
       'class' => implode(' ', $classes)
     );
     foreach(array('class','type') as $k) unset( $attrs[$k] );
-    ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>>
-      <?= do_shortcode( $text ) ?>
-    </<?= $tag ?>>
+    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= do_shortcode( $text ) ?></<?= $tag ?>>
     <?php
     
   }
@@ -661,9 +654,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     
     foreach(array('class','icon','text') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
-    ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>>
-    <?php
+    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>><?php
     
   }
   
@@ -707,9 +698,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     
     foreach(array('class','icon','text') as $k ) unset( $attrs[$k] );
     $tag_attrs = array_merge( $attrs, $tag_attrs );
-    ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>>
-    <?php
+    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?= $text ?></<?= $tag ?>><?php
     
   }
   

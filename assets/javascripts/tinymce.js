@@ -207,7 +207,7 @@
   var modal_count = 0;
   register_plugin(
     'modal'
-  , 'Add an modal window'
+  , 'Add a modal window'
   , '/../images/application-medium.png'
   , function(c){ return [
       '[modal id="modal-'+(++modal_count)+'"]',

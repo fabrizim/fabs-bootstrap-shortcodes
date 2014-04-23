@@ -66,6 +66,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
   
   /**
    * @wp.shortcode
+   * @wp.inline
    */
   public function button($attrs, $text = '')
   {
@@ -139,9 +140,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
     
-    ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?php foreach( $row['_items'] as $col ) echo $col['_content']; ?></<?= $tag ?>>
-    <?php
+    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs ) ?>><?php foreach( $row['_items'] as $col ) echo $col['_content']; ?></<?= $tag ?>><?php
     
   }
   
@@ -207,11 +206,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     $tag_attrs = array_merge( $attrs, $tag_attrs );
     
     ob_start();
-    ?>
-    <<?= $tag ?> <?= $this->to_attrs( $tag_attrs) ?>>
-    <?= do_shortcode( $content ) ?>
-    </<?= $tag ?>>
-    <?php
+    ?><<?= $tag ?> <?= $this->to_attrs( $tag_attrs) ?>><?= do_shortcode( $content ) ?></<?= $tag ?>><?php
     $col['_content'] = ob_get_clean();
     $row['_items'][] = $col;
   }
@@ -372,6 +367,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
   
   /**
    * @wp.shortcode
+   * @wp.inline
    */
   public function label($attrs, $text='')
   {
@@ -394,6 +390,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
   
   /**
    * @wp.shortcode
+   * @wp.inline
    */
   public function badge($attrs, $text='')
   {
@@ -446,8 +443,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
     
     
     
-    ?>
-    <ul <?= $this->to_attrs( $tag_attrs ) ?>>
+    ?><ul <?= $this->to_attrs( $tag_attrs ) ?>>
     <?php
     foreach( $this->accordion as $i => $panel ){
       ?>
@@ -459,9 +455,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
       </li>
       <?php
     } 
-    ?>
-    </ul>
-    <?php
+    ?></ul><?php
     
   }
   
@@ -580,6 +574,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
   
   /**
    * @wp.shortcode
+   * @wp.inline
    */
   public function modal_link($attrs=array(), $content='', $tag)
   {
@@ -611,6 +606,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
   
   /**
    * @wp.shortcode
+   * @wp.inline
    */
   public function icon($attrs, $content='', $tag)
   {
@@ -634,6 +630,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
   
   /**
    * @wp.shortcode
+   * @wp.inline
    */
   public function tooltip($attrs, $content='')
   {
@@ -675,6 +672,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
   
   /**
    * @wp.shortcode
+   * @wp.inline
    */
   public function popover($attrs, $content='')
   {

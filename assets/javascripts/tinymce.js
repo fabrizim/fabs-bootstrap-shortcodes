@@ -25,11 +25,11 @@
   * Button
   *********************************************************/
   register_plugin(
-    'button'
+    'bootstrap_button'
   , 'Add a Bootstrap Button'
   , '/../images/ui-button-default.png'
   , function(c){
-      return '[button size="default" type="primary"]'+(c||'...Button Text...')+'[/button]';
+      return '[button size="default" href="#" type="primary"]'+(c||'...Button Text...')+'[/button]';
     }
   );
   

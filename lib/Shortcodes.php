@@ -3,7 +3,7 @@ class Fabs_Bootstrap_Shortcodes extends Snap_Wordpress_Shortcodes
 {
   
   protected $buttons = array(
-    'button'
+    'bootstrap_button'
   , 'halves'
   , 'thirds'
   , 'tabs'

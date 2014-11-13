@@ -7,6 +7,7 @@
         ed.addButton(name, {
           title : title,
           image : url+image,
+          classes : 'btn fabs-bootstrap-icon',
           onclick : function() {
             c = ed.selection.getContent();
             if ( typeof content == 'function') content = content( c );
@@ -25,7 +26,7 @@
   * Button
   *********************************************************/
   register_plugin(
-    'button'
+    'bootstrap_btn'
   , 'Add a Bootstrap Button'
   , '/../images/ui-button-default.png'
   , function(c){
@@ -137,7 +138,7 @@
   , 'Add an error box'
   , '/../images/exclamation-red.png'
   , function(c){ return [
-      '[alert type="error"]',
+      '[alert type="danger"]',
         (c || 'Alert Message'),
       '[/alert]'
     ].join('<br />')}
@@ -210,7 +211,7 @@
   , 'Add a modal window'
   , '/../images/application-medium.png'
   , function(c){ return [
-      '[modal id="modal-'+(++modal_count)+'"]',
+      '[modal id="modal-'+(++modal_count)+'" link_text="Open Modal Text" link_button="true" link_button_class="primary"]',
         c || 'Modal Content',
       '[/modal]'
     ].join('<br />') }
